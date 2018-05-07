@@ -1,13 +1,12 @@
-const {User} = require('../models/user');
 const {Group} = require('../models/group');
-const {UsersDb} = require('../models/users');
 const MenuView = require('../views/menu-view');
 const mainQuestion = `== Users & Groups ==
 [1] Add user to group
 [2] Delete user from group
 [3] Print a list of groups and users under each group
 [4] Print full tree of group and users 
-[5] Back`
+[5] Flatten group
+[6] Back`
 ;
 class UsersAndGroupsController {
     constructor(tree, back, usersDb) {
@@ -20,7 +19,6 @@ class UsersAndGroupsController {
         MenuView.RootMenu((answer) => {
             switch (answer) {
                 case "1":
-                    //Add user to group
                     this.getUsernameAndGroupName("add");
                     break;
                 case "2":
@@ -30,11 +28,12 @@ class UsersAndGroupsController {
                     //Print a list of groups and users under each group
                     break;
                 case "4":
-                    // Print full tree of group and users.
-                    // Each group sums up the users count in that
-                    // group or all groups beneath it.
+                    this.printFullTree();
                     break;
                 case "5":
+                    this.getGroupToFlatten();
+                    break;
+                case "6":
                     this.back();
                     break;
                 default:
@@ -45,11 +44,70 @@ class UsersAndGroupsController {
         }, mainQuestion)
     }
 
+    getGroupToFlatten(){
+        MenuView.RootMenu((groupName)=>{
+            let selectedGroup;
+            const nodes = this.tree.search(groupName);
+            if(nodes.length > 1) {
+                const resultsPath = nodes.map((node) => {
+                    return node.myPath().join(">");
+                });
+                for (let i = 0; i < resultsPath.length; i++) {
+                    MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
+                }
+                MenuView.RootMenu((i) => {
+                    selectedGroup = nodes[i];
+                    selectedGroup.flattening();
+                })
+            }
+            else if(nodes.length === 1){
+                selectedGroup = nodes[0];
+                if(selectedGroup.flattening()){
+                 MenuView.sendMessage("Group flattened successfully");
+                }
+                else{
+                    MenuView.sendMessage("Group cannot be flattened")
+                }
+            }
+            else{
+                MenuView.sendMessage("Group does not exist");
+            }
+        }, "Enter the name of the group you want to flatten");
+    }
+
+    padding(number){
+        let start = " ";
+        let space =  "-";
+        for(let i = 0; i<number; i++){
+           start += space
+        }
+        return start;
+    }
+
+    getNumberOfChildren(node){
+        return 14;//fixme
+    }
+
+    printFullTree(){
+        const tree = this.tree.printFullTree();
+        tree.forEach((node)=>{
+            let padding = this.padding(node.step);
+            let childrenNumber = this.getNumberOfChildren();
+            if(node.child instanceof Group){
+                MenuView.sendMessage(padding + node.child.name + `(${childrenNumber})`)
+            }
+            else{
+                MenuView.sendMessage(padding + node.child.name);
+            }
+        });
+        this.usersAndGroupsMenu();
+    }
+
     getUsernameAndGroupName(action) {
-        let username, groupName;
+        let userName, selectedGroup;
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
-                username = name;
+                userName = name;
                 getGroupName.call(this);
             }
             else{
@@ -60,37 +118,54 @@ class UsersAndGroupsController {
 
         function getGroupName(){
             MenuView.RootMenu((name)=>{
-                //לעבור על כל העץ, למצוא את כל הקבוצות שעונות על השם הנ"ל
-                //להראות ללקוח את הנתיבים של שתי הקבוצות ולשאול אותו לאיזה קבוצה הוא רוצה להוסיף את המשתמש
                 const nodes = this.tree.search(name);
-                debugger;
                 if(nodes.length > 1){
                     const resultsPath = nodes.map((node)=>{
                         return node.myPath().join(">");
                     });
                     for(let i = 0; i<resultsPath.length; i++){
-                        MenuView.sendMessage(`[${i}] + ${resultsPath[i]}`);
-                        //לשאול את הלקוח איזה קבוצה הוא בוחר... הוא בוחר אינדקס ואז ללכת למערך של הנוודס באינדקס שהוא נתן לי ולהוסיף את היוזר.
+                        MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
                     }
-                    // לשאול את הלקוח לאיזה קבוצה הוא רוצה להוסיף\למחוק ממנה את המשתמש?
-                    MenuView.RootMenu(()=>{}, "q");
-                    groupName = name;
-                    if(action === "add") {
-                        //addUserToGroup(username, groupName);
-                    }
-                    else if(action === "delete"){
-                        //deleteUserFromGroup(username, groupName);
-                    }
+                    MenuView.RootMenu((i)=>{
+                        selectedGroup = nodes[i];
+                        this.addOrDelete(action, userName, selectedGroup);
+                    }, "Select a group");
                 }
-                else if(results.length = 1){
-                    //להמשיך הלאה עם הקבוצה היחידה.
+                else if(nodes.length === 1){
+                    selectedGroup = nodes[0];
+                    this.addOrDelete(action, userName, selectedGroup);
                 }
-                else if(!results.length){
-                    sendMessage("Group does not exist");
+                else if(!nodes.length){
+                    MenuView.sendMessage("Group does not exist");
                     this.usersAndGroupsMenu();
                 }
             }, "Enter a group name");
         }
+    }
+
+    addOrDelete(action, userName, selectedGroup ){
+        if(action === "add") {
+            this.addUserToGroup(userName, selectedGroup);
+        }
+        else if(action === "delete"){
+            this.deleteUserFromGroup(userName, selectedGroup);
+        }
+    }
+
+    addUserToGroup(userName, selectedGroup){
+        if(selectedGroup.isNodeExistInGroup(userName)){
+            MenuView.sendMessage("User is already exist in this group");
+            this.usersAndGroupsMenu();
+        }
+        else{
+            selectedGroup.addUserToGroup(userName, this.usersDb);
+            MenuView.sendMessage("User added successfully to the group");
+            this.usersAndGroupsMenu();
+        }
+    }
+
+    deleteUserFromGroup(userName, selectedGroup){
+
     }
 }
 

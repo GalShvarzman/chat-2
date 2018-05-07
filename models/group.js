@@ -1,3 +1,4 @@
+const {User} = require('./user');
 let i = 0;
 class Group {
     constructor(parent, name, children) {
@@ -6,27 +7,90 @@ class Group {
         this.children = children || [];
     }
 
-    flattening(nodeName){
-        //remove the node but add his users to his parent node;
+    flattening() {
+        let parent = this.parent;
+        if(parent.children.length === 1) {
+            parent.children.length = 0;
+            if(this.children){
+                this.children.forEach((child)=>{
+                    parent.children.push(child);
+                });
+            }
+            return true
+        }
+        else{
+            return false
+        }
+
     }
-    remove(nodeName){
-        //remove node from tree;
+
+    getGroupsAndUsersListForPrint(){}
+
+    printFullTree(){
+        return [{"child":this, "step":0} , ...this.walkTree(this, 1)]
     }
+
+    walkTree(node, step){
+        const allTree = [];
+        if(node.children){
+            node.children.forEach((child)=>{
+                allTree.push({child, step});
+                if(child.children){
+                    allTree.push(...this.walkTree(child, step+1));
+                }
+            });
+            return allTree;
+        }
+    }
+
+    removeGroup(node) {
+        let parent = node.parent;
+        let i = parent.children.findIndex((child) => {
+            return child.name === node.name;
+        });
+        if (i !== -1) {
+            parent.children.splice(i, 1);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    removeUserFromGroups(parents, userName) {
+        const indexes = [];
+        parents.forEach((parent) => {
+            let i = parent.children.findIndex((child) => {
+                return child.name === userName;
+            });
+            if (i !== -1) {
+                parent.children.splice(i, 1);
+                indexes.push(i);
+            }
+        });
+        if (indexes.length === parents.length) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     checkTypeAndAdd(resultNode, node) {
         if (resultNode.children.length) {
             if (resultNode.children[0] instanceof Group && node instanceof Group) {
                 resultNode.children.push(node);
                 node.parent = resultNode;
             }
-            else if(resultNode.children[0] instanceof User && node instanceof User){
+            else if (resultNode.children[0] instanceof User && node instanceof User) {
                 resultNode.children.push(node);
                 node.parents.push(resultNode);
             }
             else if (resultNode.children[0] instanceof Group && node instanceof User) {
-                if(resultNode.others){
+                if (resultNode.others) {
                     resultNode.others.children.push(node);
                 }
-                else{
+                else {
                     resultNode.others = new Group(resultNode, "others" + ++i, [node]);
                     resultNode.children.push(resultNode.others);
                 }
@@ -40,7 +104,7 @@ class Group {
                 resultNode.others = new Group(resultNode, "others" + ++i, otherChildren);
                 resultNode.children.push(resultNode.others);
                 otherChildren.forEach((child) => {
-                    child.parents.push ({
+                    child.parents.push({
                         parent: resultNode,
                         name: "others" + i,
                         children: otherChildren
@@ -50,56 +114,57 @@ class Group {
                 node.parent = resultNode;
             }
         }
-        else{
+        else {
             resultNode.children.push(node);
-            if(node instanceof Group){
+            if (node instanceof Group) {
                 node.parent = resultNode;
             }
-            else{
+            else {
                 node.parents.push(resultNode);
             }
 
         }
     }
 
-    searchGroupPath(groupName){
-        const groupNode = this.searchUnique(groupName);
-        const path = groupNode.myPath(groupNode);
-        return path.map((step)=>{
-            return step
-        })
-    }
+    // searchGroupPath(groupName) {
+    //     const groupNode = this.searchUnique(groupName);
+    //     const path = groupNode.myPath(groupNode);
+    //     return path.map((step) => {
+    //         return step
+    //     })
+    // }
 
-    add(node, parentName) {// לפני שמוסיפים קבוצה לקבוצה אחרת צריך לבדוק אם השם הזה כבר קיים שם... ואם כן לא לאפשר להוסיף..
-        //בנוסף, אם נותנים שם של קבוצה שלא קיימת לזרוק שגיאה שאין קבוצה כזאת... ולחזור לתפריט.
-        if (parentName) {
-            const result = this.searchUnique(parentName);
-            if (result) {
-                this.checkTypeAndAdd(result, node);
-            }
-            else{
-                //error///group does not exist!
-            }
+    add(node, parentNode) {
+        if (parentNode) {
+            this.checkTypeAndAdd(parentNode, node);
         }
         else {
             this.checkTypeAndAdd(this, node);
         }
     }
 
-    search(nodeName){
-        return this.internalSearchAll.call(this, this, nodeName);
+    addUserToGroup(userName, usersDb) {
+        const userNode = usersDb.getUser(userName);
+        this.checkTypeAndAdd(this, userNode);
     }
 
-    internalSearchAll(node, nodeName){//fixme the searchAll needs to walk all the tree because group name is not unique;
-        if(node.children){
+
+    search(nodeName) {
+        return this.internalSearchAll(this, nodeName);
+    }
+
+    internalSearchAll(node, nodeName) {
+        if (node.children) {
             const results = [];
             node.children.forEach((child) => {
                 if (child.name === nodeName) {
                     results.push(child);
                 }
-                results.push(...this.internalSearchAll(child, nodeName));
+                if(child.children){
+                    results.push(...this.internalSearchAll(child, nodeName))
+                }
             });
-            return results; // return array with all the group who have the same name;
+            return results;
         }
     }
 
@@ -108,7 +173,7 @@ class Group {
     }
 
     internalSearchUnique(node, nodeName) {
-        if(node.children){
+        if (node.children) {
             let result;
             node.children.some((child) => {
                 if (child.name === nodeName) {
@@ -124,18 +189,50 @@ class Group {
         }
     }
 
-    myPath(){/// check אם יש לי כמה קבוצות עם אותו השם אני מכניסה את כל הנתיבים שלהן לאותו מערך.. לא טוב
+    myPath() {
         const parents = this.getParents();
-        return parents.map((parent)=>{
+        return parents.map((parent) => {
             return parent.name;
         });
     }
-    getParents(){
+
+    getParents() {
         const parents = [this];
-        if(this.parent){
+        if (this.parent) {
             parents.unshift(...this.parent.getParents());
         }
         return parents
+    }
+
+    isNodeExistInGroup(name) {
+        const i = this.children.findIndex((child) => {
+            return child.name === name;
+        });
+        if (i !== -1) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    getGroupsList() {
+        return this.internalSearchAllGroups(this)
+    }
+
+    internalSearchAllGroups(node) {
+        if (node.children) {
+            const results = [];
+            node.children.forEach((child) => {
+                if (child instanceof Group) {
+                    results.push(child);
+                }
+                if(child.children){
+                    results.push(...this.internalSearchAllGroups(child));
+                }
+            });
+            return results;
+        }
     }
 }
 

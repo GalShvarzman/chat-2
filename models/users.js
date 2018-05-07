@@ -5,7 +5,7 @@ class UsersDb{
 
     findUserIndex(username){
         return this.users.findIndex((user)=>{
-            return username === user.username;
+            return username === user.name;
         })
     }
     isUserExists(username){
@@ -21,19 +21,21 @@ class UsersDb{
             this.users.splice(i, 1);
             return true;
         }
-        return false;
+        else{
+            return false;
+        }
     }
     addUser(user){
         this.users.push(user);
     }
     getUserNamesList(){
         return this.users.map((user)=>{
-            return user.username
+            return user.name
         })
     }
     getUser(userName){
         return this.users.find((user)=>{
-            return user.username === userName;
+            return user.name === userName;
         })
     }
 }

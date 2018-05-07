@@ -27,9 +27,10 @@ class UsersController{
                     break;
                 case "2":
                     //Delete user// from usersDb and from all the groups the he is in.
+                    this.deleteUser();
                     break;
                 case "3":
-                    //printUsersList
+                    this.printUsersList();
                     break;
                 case "4":
                     //updateUserAge
@@ -76,6 +77,29 @@ class UsersController{
                 MenuView.sendMessage("User created successfully!");
                 this.usersMenu();
             }, "Select a password")
+        }
+    }
+
+    deleteUser(){
+        MenuView.RootMenu((name)=>{
+            if(this.usersDb.isUserExists(name)){
+                const parents = this.usersDb.getUser(name).parents;
+                if(this.usersDb.deleteUser(name) && this.tree.removeUserFromGroups(parents, name)){
+                    MenuView.sendMessage("User deleted successfully");
+                    this.usersMenu();
+                }
+            }
+            else{
+                MenuView.sendMessage("User does not exist");
+                this.usersMenu();
+            }
+        }, "Enter the name of the user you want to delete");
+    }
+
+    printUsersList(){
+        const users = this.usersDb.getUserNamesList();
+        for(let user of users){
+            MenuView.sendMessage(user);
         }
     }
 }

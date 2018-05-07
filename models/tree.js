@@ -4,8 +4,8 @@ class NTree{
         this.root = new Group(this.root, "treeRoot");
     }
 
-    add(node, parentName){
-        this.root.add(node, parentName);
+    add(node, parentNode){
+        this.root.add(node, parentNode);
     }
     search(nodeName){
         return this.root.search(nodeName)
@@ -13,12 +13,26 @@ class NTree{
     searchUnique(nodeName){
         return this.root.searchUnique(nodeName);
     }
-    remove(nodeName){
-        this.root.remove(nodeName);
+    removeGroup(node){
+        return this.root.removeGroup(node);
     }
-    flattening(nodeName){
-        this.root.flattening(nodeName);
+    removeUserFromGroups(parents, userName){
+        return this.root.removeUserFromGroups(parents, userName);
     }
+    getGroupsAndUsersListForPrint(){}
+
+    printFullTree(){
+        return this.root.printFullTree();
+    }
+    getGroupsList(){
+        return this.root.getGroupsList();
+    }
+    isNodeExistInGroup(name){
+        return this.root.isNodeExistInGroup(name);
+    }
+    // searchGroupPath(groupName){
+    //     return this.root.searchGroupPath(groupName);
+    // }
 }
 
 module.exports.NTree = NTree;
