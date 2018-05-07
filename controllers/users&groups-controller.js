@@ -57,8 +57,14 @@ class UsersAndGroupsController {
                 }
                 MenuView.RootMenu((i) => {
                     selectedGroup = nodes[i];
-                    selectedGroup.flattening();
-                })
+                    if(selectedGroup.flattening()){
+                        MenuView.sendMessage("Group flattened successfully");
+                    }
+                    else{
+                        MenuView.sendMessage("Group cannot be flattened")
+                    }
+                    this.usersAndGroupsMenu();
+                }, "Select a group")
             }
             else if(nodes.length === 1){
                 selectedGroup = nodes[0];
@@ -68,10 +74,13 @@ class UsersAndGroupsController {
                 else{
                     MenuView.sendMessage("Group cannot be flattened")
                 }
+                this.usersAndGroupsMenu();
             }
             else{
                 MenuView.sendMessage("Group does not exist");
+                this.usersAndGroupsMenu();
             }
+
         }, "Enter the name of the group you want to flatten");
     }
 
