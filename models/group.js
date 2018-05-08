@@ -7,6 +7,11 @@ class Group {
         this.children = children || [];
     }
 
+    removeParent(node){
+        return;
+    }
+
+
     flattening() {
         let parent = this.parent;
         if(parent.children.length === 1) {
@@ -17,9 +22,9 @@ class Group {
                     child.removeParent(this);
                     child.parents.push(parent);
                 });
-
-                return true// לא נכון להחזיר טרו כי לא בדקתי שאכן הכל קרה... לבדוק שאכן עובד
+                return true
             }
+
         }
         else{
             return false
@@ -28,16 +33,21 @@ class Group {
     }
 
     printFullTree(){
-        return [{"child":this, "step":0} , ...this.walkTree(this, 1)]
+        return [{"child":this, "step":0, "count":""} , ...this.walkTree(this, 1, 0)]
     }
 
-    walkTree(node, step){
+    walkTree(node, step, count){//fixme count.....
         const allTree = [];
         if(node.children){
             node.children.forEach((child)=>{
-                allTree.push({child, step});
                 if(child.children){
-                    allTree.push(...this.walkTree(child, step+1));
+                    allTree.push({child, step, count :count+(child.children.length)})
+                }
+                else{
+                    allTree.push({child, step});
+                }
+                if(child.children){
+                    allTree.push(...this.walkTree(child, step+1, count));
                 }
             });
             return allTree;
@@ -56,7 +66,6 @@ class Group {
         else {
             return false;
         }
-        // צריך גם למחוק את הקבוצה הזו ממערך ההורים של הילדים שלה.
     }
 
     removeUserFromGroups(parents, userName) {
@@ -83,20 +92,28 @@ class Group {
             if (resultNode.children[0] instanceof Group && node instanceof Group) {
                 resultNode.children.push(node);
                 node.parent = resultNode;
+                return true;
             }
             else if (resultNode.children[0] instanceof User && node instanceof User) {
                 resultNode.children.push(node);
                 node.parents.push(resultNode);
+                return true;
             }
             else if (resultNode.children[0] instanceof Group && node instanceof User) {
-                if (resultNode.others) {
-                    resultNode.others.children.push(node);
+                if (resultNode.others) {// fixme cant add the same user to others;
+                    if(resultNode.others.isNodeExistInGroup(node.name)){
+                        return false;
+                    }
+                    else{
+                        resultNode.others.children.push(node);
+                    }
                 }
                 else {
                     resultNode.others = new Group(resultNode, "others" + ++i, [node]);
                     resultNode.children.push(resultNode.others);
                 }
                 node.parents.push(resultNode.others);
+                return true;
             }
             else {
                 const otherChildren = resultNode.children.map((child) => {
@@ -114,6 +131,7 @@ class Group {
                 });
                 resultNode.children.push(node);
                 node.parent = resultNode;
+                return true;
             }
         }
         else {
@@ -124,7 +142,7 @@ class Group {
             else {
                 node.parents.push(resultNode);
             }
-
+            return true;
         }
     }
 
@@ -147,7 +165,12 @@ class Group {
 
     addUserToGroup(userName, usersDb) {
         const userNode = usersDb.getUser(userName);
-        this.checkTypeAndAdd(this, userNode);
+        if(!this.checkTypeAndAdd(this, userNode)){
+            return false
+        }
+        else{
+            return true
+        }
     }
 
 

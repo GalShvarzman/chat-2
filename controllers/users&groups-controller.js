@@ -1,4 +1,5 @@
 const {Group} = require('../models/group');
+const {User} = require('../models/user');
 const MenuView = require('../views/menu-view');
 const mainQuestion = `== Users & Groups ==
 [1] Add user to group
@@ -105,17 +106,17 @@ class UsersAndGroupsController {
         return start;
     }
 
-    getNumberOfChildren(node){
-        return 14;//fixme
+    getNumberOfChildren(node){//fixme
+        return 12;
     }
 
     printFullTree(){
         const tree = this.tree.printFullTree();
         tree.forEach((node)=>{
             let padding = this.padding(node.step);
-            let childrenNumber = this.getNumberOfChildren();
             if(node.child instanceof Group){
-                MenuView.sendMessage(padding + node.child.name + `(${childrenNumber})`)
+                //let childrenNumber = this.getNumberOfChildren(node.child);
+                MenuView.sendMessage(padding + node.child.name + ` ${node.count}`) //fixme
             }
             else{
                 MenuView.sendMessage(padding + node.child.name);
@@ -179,14 +180,26 @@ class UsersAndGroupsController {
             this.usersAndGroupsMenu();
         }
         else{
-            selectedGroup.addUserToGroup(userName, this.usersDb);
-            MenuView.sendMessage("User added successfully to the group");
+            if(!selectedGroup.addUserToGroup(userName, this.usersDb)){
+                MenuView.sendMessage("The user can not be added to the group")
+            }
+            else{
+                MenuView.sendMessage("User added successfully to the group");
+            }
             this.usersAndGroupsMenu();
         }
     }
 
     deleteUserFromGroup(userName, selectedGroup){
-
+        if (selectedGroup.removeUserFromGroup(userName)){
+            const selectedUser = this.usersDb.getUser(userName);
+            selectedUser.removeParent(selectedGroup);
+            MenuView.sendMessage("User deleted successfully");
+        }
+        else{
+            MenuView.sendMessage("Something went wrong...");
+        }
+        this.usersAndGroupsMenu();
     }
 }
 

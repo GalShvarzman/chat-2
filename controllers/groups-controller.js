@@ -1,4 +1,5 @@
 const {Group} = require('../models/group');
+const {User} = require('../models/user');
 const MenuView = require('../views/menu-view');
 
 const mainQuestion = `== Groups ==
@@ -67,14 +68,7 @@ class GroupsController{
                 else{
                     const nodes = this.tree.search(answer);
                     if(nodes.length > 1){
-                        const resultsPath = nodes.map((node)=>{
-                            return node.myPath().join(">");
-                        });
-                        for(let i = 0; i<resultsPath.length; i++){
-                            MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
-                        }
-                        MenuView.RootMenu((i)=>{
-                            const selectedGroup = nodes[i];
+                        this.filterOptions(nodes).then((selectedGroup)=>{
                             if(!selectedGroup.isNodeExistInGroup(groupName)){
                                 this.tree.add(new Group(null, groupName), selectedGroup);
                                 MenuView.sendMessage("Group created successfully");
@@ -82,7 +76,18 @@ class GroupsController{
                             else{
                                 MenuView.sendMessage("There is already a group with this name within the group you selected")
                             }
-                        }, "Select a group");
+                            this.groupsMenu();
+                        });
+                        // const resultsPath = nodes.map((node)=>{
+                        //     return node.myPath().join(">");
+                        // });
+                        // for(let i = 0; i<resultsPath.length; i++){
+                        //     MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
+                        // }
+                        // MenuView.RootMenu((i)=>{
+                        //     const selectedGroup = nodes[i];
+
+                        // }, "Select a group");
                     }
                     else if(nodes.length === 1){
                         const selectedGroup = nodes[0];
@@ -99,7 +104,7 @@ class GroupsController{
                     }
                 }
                 this.groupsMenu();
-            }, "Where to? group [enter the group name] or Tree [root]?")
+            }, "Where to? group [enter the group name] or Tree [root]?");
         }
 
     }
@@ -107,47 +112,73 @@ class GroupsController{
     getGroupFullPath(){
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);
-            const path = [];
-            nodes.forEach((node)=>{
-                path.push(node.myPath().join(' > '));
-            });
-            for(let p of path){
-                MenuView.sendMessage(p);
+            if(nodes.length){
+                const path = [];
+                nodes.forEach((node)=>{
+                    path.push(node.myPath().join(' > '));
+                });
+                for(let p of path){
+                    MenuView.sendMessage(p);
+                }
+            }
+            else{
+                MenuView.sendMessage("Group does not exist");
             }
            this.groupsMenu();
         }, "Enter a group name");
+    }
+
+    filterOptions(nodes) {
+        return new Promise((resolve,reject)=>{
+            let selectedGroup;
+
+            const resultsPath = nodes.map((node) => {
+                return node.myPath().join(">");
+            });
+            for (let i = 0; i < resultsPath.length; i++) {
+                MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
+            }
+            MenuView.RootMenu((i) => {
+                selectedGroup = nodes[i];
+                resolve (selectedGroup)
+            }, "Select a group");//fixme - השאלה נשלחת פעמיים
+        })
     }
 
     deleteGroup(){
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);
             if(nodes.length > 1){
-                const resultsPath = nodes.map((node)=>{
-                    return node.myPath().join(">");
-                });
-                for(let i = 0; i<resultsPath.length; i++){
-                    MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
-                }
-                MenuView.RootMenu((i)=> {
-                    const selectedGroup = nodes[i];
-                    selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
-                    if(this.tree.removeGroup(selectedGroup)){
-                        MenuView.sendMessage("Group deleted successfully");
-                        this.groupsMenu();
-                    }
-                }, "Select a group to delete")
+                 this.filterOptions(nodes).then((selectedGroup)=>{
+                     if(selectedGroup.children.length){
+                         if(selectedGroup.children[0] instanceof User){
+                             selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
+                         }
+                     }
+                     if(this.tree.removeGroup(selectedGroup)){
+                         MenuView.sendMessage("Group deleted successfully");
+                     }
+                     else{
+                         MenuView.sendMessage("Something went wrong...");
+                     }
+                     this.groupsMenu();
+                 });
             }
+
             else if(nodes.length === 1){
-                const selectedGroup = nodes[0];
-                selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
+                selectedGroup = nodes[0];
+                if(selectedGroup.children.length){
+                    if(selectedGroup.children[0] instanceof User){
+                        selectedGroup.children.forEach(user => user.removeParent(selectedGroup));
+                    }
+                }
                 if(this.tree.removeGroup(selectedGroup)){
                     MenuView.sendMessage("Group deleted successfully");
-                    this.groupsMenu();
                 }
                 else{
                     MenuView.sendMessage("Something went wrong, try again");
-                    this.groupsMenu();
                 }
+                this.groupsMenu();
             }
             else{
                 MenuView.sendMessage("Group does not exist");
@@ -158,8 +189,13 @@ class GroupsController{
 
     printGroupsList(){
         const groups = this.tree.getGroupsList();
-        for(let group of groups){
-            MenuView.sendMessage(group.name);
+        if(groups.length){
+            for(let group of groups){
+                MenuView.sendMessage(group.name);
+            }
+        }
+        else{
+            MenuView.sendMessage("The list is empty");
         }
         this.groupsMenu();
     }

@@ -1,6 +1,6 @@
 const {User} = require('../models/user');
 const MenuView = require('../views/menu-view');
-const mainQuestion = `==Users==
+const mainQuestion = `== Users ==
 [1] Create new User
 [2] Delete user
 [3] Print users List
@@ -94,9 +94,15 @@ class UsersController{
 
     printUsersList(){
         const users = this.usersDb.getUserNamesList();
-        for(let user of users){
-            MenuView.sendMessage(user);
+        if(users.length){
+            for(let user of users){
+                MenuView.sendMessage(user);
+            }
         }
+        else{
+            MenuView.sendMessage("List is empty");
+        }
+        this.usersMenu();
     }
 
     updateUserAge(){
@@ -144,13 +150,18 @@ class UsersController{
     }
 
     GetAllGroupsThatAUserAssociatedWith(){
-        MenuView((userName)=>{
+        MenuView.RootMenu((userName)=>{
             if(this.usersDb.isUserExists(userName)){
                 const selectedUser = this.usersDb.getUser(userName);
                 const userParents = selectedUser.getParentsToPrint();
-                userParents.forEach((parent)=>{
-                    MenuView.sendMessage(parent);
-                })
+                if(userParents.length){
+                    userParents.forEach((parent)=>{
+                        MenuView.sendMessage(parent);
+                    })
+                }
+                else{
+                    MenuView.sendMessage("The user is not associated with any group")
+                }
             }
             else{
                 MenuView.sendMessage("User does not exist");
