@@ -80,7 +80,7 @@ class GroupsController{
                                 MenuView.sendMessage("Group created successfully");
                             }
                             else{
-                                MenuView.sendMessage("There is already a group with this name within the group you selected\n")
+                                MenuView.sendMessage("There is already a group with this name within the group you selected")
                             }
                         }, "Select a group");
                     }
@@ -91,7 +91,7 @@ class GroupsController{
                             MenuView.sendMessage("Group created successfully");
                         }
                         else{
-                            MenuView.sendMessage("There is already a group with this name within the group you selected\n")
+                            MenuView.sendMessage("There is already a group with this name within the group you selected")
                         }
                     }
                     else{
@@ -129,13 +129,16 @@ class GroupsController{
                 }
                 MenuView.RootMenu((i)=> {
                     const selectedGroup = nodes[i];
-                    this.tree.removeGroup(selectedGroup);
-                    MenuView.sendMessage("Group deleted successfully");
-                    this.groupsMenu();
+                    selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
+                    if(this.tree.removeGroup(selectedGroup)){
+                        MenuView.sendMessage("Group deleted successfully");
+                        this.groupsMenu();
+                    }
                 }, "Select a group to delete")
             }
             else if(nodes.length === 1){
                 const selectedGroup = nodes[0];
+                selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
                 if(this.tree.removeGroup(selectedGroup)){
                     MenuView.sendMessage("Group deleted successfully");
                     this.groupsMenu();
@@ -151,6 +154,7 @@ class GroupsController{
             }
         }, "Enter the name of the group you want to delete")
     }
+
     printGroupsList(){
         const groups = this.tree.getGroupsList();
         for(let group of groups){

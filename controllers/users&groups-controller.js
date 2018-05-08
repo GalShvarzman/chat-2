@@ -3,10 +3,9 @@ const MenuView = require('../views/menu-view');
 const mainQuestion = `== Users & Groups ==
 [1] Add user to group
 [2] Delete user from group
-[3] Print a list of groups and users under each group
-[4] Print full tree of group and users 
-[5] Flatten group
-[6] Back`
+[3] Print full tree of group and users 
+[4] Flatten group
+[5] Back`
 ;
 class UsersAndGroupsController {
     constructor(tree, back, usersDb) {
@@ -22,18 +21,15 @@ class UsersAndGroupsController {
                     this.getUsernameAndGroupName("add");
                     break;
                 case "2":
-                    //Delete user from group
+                    this.getUsernameAndGroupName("delete");
                     break;
                 case "3":
-                    //Print a list of groups and users under each group
-                    break;
-                case "4":
                     this.printFullTree();
                     break;
-                case "5":
+                case "4":
                     this.getGroupToFlatten();
                     break;
-                case "6":
+                case "5":
                     this.back();
                     break;
                 default:
@@ -42,6 +38,22 @@ class UsersAndGroupsController {
                     break;
             }
         }, mainQuestion)
+    }
+
+    deleteUserFromGroup(userName, selectedGroup){
+        if(!selectedGroup.isNodeExistInGroup(userName)){
+            MenuView.sendMessage("User does not exist in this group");
+        }
+        else{
+            const user = this.usersDb.getUser(userName);
+            if(user.removeParent(selectedGroup) && selectedGroup.removeUserFromGroup(userName)){
+                MenuView.sendMessage("User deleted successfully from the group");
+            }
+            else{
+                MenuView.sendMessage("Something went wrong");
+            }
+        }
+        this.usersAndGroupsMenu();
     }
 
     getGroupToFlatten(){

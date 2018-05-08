@@ -14,17 +14,18 @@ class Group {
             if(this.children){
                 this.children.forEach((child)=>{
                     parent.children.push(child);
+                    child.removeParent(this);
+                    child.parents.push(parent);
                 });
+
+                return true// לא נכון להחזיר טרו כי לא בדקתי שאכן הכל קרה... לבדוק שאכן עובד
             }
-            return true
         }
         else{
             return false
         }
 
     }
-
-    getGroupsAndUsersListForPrint(){}
 
     printFullTree(){
         return [{"child":this, "step":0} , ...this.walkTree(this, 1)]
@@ -55,6 +56,7 @@ class Group {
         else {
             return false;
         }
+        // צריך גם למחוק את הקבוצה הזו ממערך ההורים של הילדים שלה.
     }
 
     removeUserFromGroups(parents, userName) {
@@ -232,6 +234,18 @@ class Group {
                 }
             });
             return results;
+        }
+    }
+    removeUserFromGroup(userName){
+        let i = this.children.findIndex((child)=>{
+                    return child.name === userName
+                });
+        if(i !== -1){
+            this.children.splice(i ,1);
+            return true;
+        }
+        else{
+            return false;
         }
     }
 }
