@@ -40,7 +40,7 @@ class GroupsController{
         }, mainQuestion)
     }
 
-    createNewGroup(){ //fixme if a group contains group1 it cant contain another group called group1.
+    createNewGroup(){
         let groupName;
         MenuView.RootMenu((name)=>{
             groupName = name;
@@ -103,6 +103,7 @@ class GroupsController{
         }
 
     }
+
     getGroupFullPath(){
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);

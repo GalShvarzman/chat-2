@@ -11,6 +11,7 @@ class User{
                     return parent  === parentNode
                 });
         if(i !== -1){
+            this.parents.splice(i, 1);
             return true
         }
         else{
@@ -18,6 +19,20 @@ class User{
         }
     }
 
+    updateAge(newAge){
+        this.age = newAge;
+        return true;
+    }
+    updatePassword(newPassword){
+        this.password = newPassword;
+        return true;
+    }
+
+    getParentsToPrint(){
+        return this.parents.map((parent)=>{
+            return parent.name;
+        })
+    }
 }
 
 module.exports.User = User;

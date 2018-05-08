@@ -1,7 +1,5 @@
 const {User} = require('../models/user');
-const {UsersDb} = require('../models/users');
 const MenuView = require('../views/menu-view');
-
 const mainQuestion = `==Users==
 [1] Create new User
 [2] Delete user
@@ -23,23 +21,21 @@ class UsersController{
             switch (answer) {
                 case "1":
                     this.createNewUser();
-                    //Create new User
                     break;
                 case "2":
-                    //Delete user// from usersDb and from all the groups the he is in.
                     this.deleteUser();
                     break;
                 case "3":
                     this.printUsersList();
                     break;
                 case "4":
-                    //updateUserAge
+                    this.updateUserAge();
                     break;
                 case "5":
-                    //updateUserPassword
+                    this.updateUserPassword();
                     break;
                 case "6":
-                    //Get all groups that a user associated with
+                    this.GetAllGroupsThatAUserAssociatedWith();
                     break;
                 case "7":
                     this.back();
@@ -101,6 +97,66 @@ class UsersController{
         for(let user of users){
             MenuView.sendMessage(user);
         }
+    }
+
+    updateUserAge(){
+        let selectedUser;
+        MenuView.RootMenu((name)=>{
+            if(this.usersDb.isUserExists(name)){
+                selectedUser = this.usersDb.getUser(name);
+                getNewAgeAndUpdate.call(this);
+            }
+            else{
+               MenuView.sendMessage("User does not exist");
+               this.usersMenu();
+            }
+        }, "Enter the name of the user you want to update");
+        function getNewAgeAndUpdate(){
+            MenuView.RootMenu((newAge)=>{
+                if(selectedUser.updateAge(newAge)){
+                    MenuView.sendMessage("User age updated successfully");
+                    this.usersMenu();
+                }
+            }, "Enter the user new age")
+        }
+    }
+
+    updateUserPassword(){
+        let selectedUser;
+        MenuView.RootMenu((name)=>{
+            if(this.usersDb.isUserExists(name)){
+                selectedUser = this.usersDb.getUser(name);
+                getNewPasswordAndUpdate.call(this);
+            }
+            else{
+                MenuView.sendMessage("User does not exist");
+                this.usersMenu();
+            }
+        }, "Enter the name of the user you want to update");
+        function getNewPasswordAndUpdate(){
+            MenuView.RootMenu((newPassword)=>{
+                if(selectedUser.updatePassword(newPassword)){
+                    MenuView.sendMessage("User password updated successfully");
+                    this.usersMenu();
+                }
+            }, "Enter The user new Password");
+        }
+    }
+
+    GetAllGroupsThatAUserAssociatedWith(){
+        MenuView((userName)=>{
+            if(this.usersDb.isUserExists(userName)){
+                const selectedUser = this.usersDb.getUser(userName);
+                const userParents = selectedUser.getParentsToPrint();
+                userParents.forEach((parent)=>{
+                    MenuView.sendMessage(parent);
+                })
+            }
+            else{
+                MenuView.sendMessage("User does not exist");
+            }
+            this.usersMenu();
+        }, "Enter the name of the user")
     }
 }
 
