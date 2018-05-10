@@ -1,7 +1,7 @@
 const {Group} = require('../models/group');
 const {User} = require('../models/user');
 const MenuView = require('../views/menu-view');
-
+const {filterOptions} = require('../utils/filter-options');
 const mainQuestion = `== Groups ==
 [1] Create new group
 [2] Delete group
@@ -64,11 +64,12 @@ class GroupsController{
                         this.tree.add(new Group(null, groupName));
                         MenuView.sendMessage("Group created successfully");
                     }
+                    this.groupsMenu()
                 }
                 else{
                     const nodes = this.tree.search(answer);
                     if(nodes.length > 1){
-                        this.filterOptions(nodes).then((selectedGroup)=>{
+                        filterOptions(nodes).then((selectedGroup)=>{
                             if(!selectedGroup.isNodeExistInGroup(groupName)){
                                 this.tree.add(new Group(null, groupName), selectedGroup);
                                 MenuView.sendMessage("Group created successfully");
@@ -92,12 +93,13 @@ class GroupsController{
                         else{
                             MenuView.sendMessage("There is already a group with this name within the group you selected")
                         }
+                        this.groupsMenu();
                     }
                     else{
                         MenuView.sendMessage("No group with this name exists");
+                        this.groupsMenu()
                     }
                 }
-                this.groupsMenu();
             }, "Where to? group [enter the group name] or Tree [root]?");
         }
 
@@ -122,33 +124,13 @@ class GroupsController{
         }, "Enter a group name");
     }
 
-    filterOptions(nodes) {
-        return new Promise((resolve,reject)=>{
-            let selectedGroup;
 
-            const resultsPath = nodes.map((node) => {
-                return node.myPath().join(">");
-            });
-            for (let i = 0; i < resultsPath.length; i++) {
-                MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
-            }
-            MenuView.RootMenu((i) => {
-                selectedGroup = nodes[i];
-                if(selectedGroup){
-                    resolve (selectedGroup);
-                }
-                else{
-                    reject(new Error("The selected group does not exist"));
-                }
-            }, "Select a group");//fixme - השאלה נשלחת פעמיים
-        })
-    }
 
-    deleteGroup(){ //fixme אם הילדים הם קבוצות ויש בהן עוד משתמשים...... צריך גם לנתק את ההצבעות של המשתמשים לקבוצות האלו שנמחקו
+    deleteGroup(){
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);
             if(nodes.length > 1){
-                 this.filterOptions(nodes).then((selectedGroup)=>{
+                 filterOptions(nodes).then((selectedGroup)=>{
                      if(selectedGroup.children.length){
                          if(selectedGroup.children[0] instanceof User){
                              selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});

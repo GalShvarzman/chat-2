@@ -184,8 +184,7 @@ class Group {
         }
     }
 
-    addUserToGroup(userName, usersDb) {
-        const userNode = usersDb.getUser(userName);
+    addUserToGroup(userNode) {
         if(!this.checkTypeAndAdd(this, userNode)){
             return false
         }
