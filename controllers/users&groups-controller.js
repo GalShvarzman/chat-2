@@ -57,7 +57,7 @@ class UsersAndGroupsController {
         this.usersAndGroupsMenu();
     }
 
-    getGroupToFlatten(){
+    getGroupToFlatten(){// fixme filter options
         MenuView.RootMenu((groupName)=>{
             let selectedGroup;
             const nodes = this.tree.search(groupName);
@@ -106,17 +106,13 @@ class UsersAndGroupsController {
         return start;
     }
 
-    getNumberOfChildren(node){//fixme
-        return 12;
-    }
-
     printFullTree(){
         const tree = this.tree.printFullTree();
         tree.forEach((node)=>{
             let padding = this.padding(node.step);
             if(node.child instanceof Group){
-                //let childrenNumber = this.getNumberOfChildren(node.child);
-                MenuView.sendMessage(padding + node.child.name + ` ${node.count}`) //fixme
+                let childrenNumber = node.child.getNumberOfChildren();
+                MenuView.sendMessage(padding + node.child.name + `(${childrenNumber})`) //fixme
             }
             else{
                 MenuView.sendMessage(padding + node.child.name);

@@ -7,11 +7,6 @@ class Group {
         this.children = children || [];
     }
 
-    removeParent(node){
-        return;
-    }
-
-
     flattening() {
         let parent = this.parent;
         if(parent.children.length === 1) {
@@ -19,10 +14,15 @@ class Group {
             if(this.children){
                 this.children.forEach((child)=>{
                     parent.children.push(child);
-                    child.removeParent(this);
-                    child.parents.push(parent);
+                    if(child instanceof User){
+                        child.removeParent(this);
+                        child.parents.push(parent);
+                    }
+                    else{
+                      child.parent = parent; // check
+                    }
                 });
-                return true
+                return true// fixme
             }
 
         }
@@ -32,22 +32,55 @@ class Group {
 
     }
 
-    printFullTree(){
-        return [{"child":this, "step":0, "count":""} , ...this.walkTree(this, 1, 0)]
+    getChildrenParentToDetach(){
+        return this.walkAllChildrenAndGetParent(this, this.parent);
     }
 
-    walkTree(node, step, count){//fixme count.....
+    walkAllChildrenAndGetParent(node, parent){
+        const childrenParent = [];
+        if(node.children){
+            node.children.forEach((child)=>{
+                if(child instanceof User){
+                    childrenParent.push({"user":child, "parent": node});
+                }
+                if(child.children){
+                    childrenParent.push(...this.walkAllChildrenAndGetParent(child, node));
+                }
+            });
+            return childrenParent;
+        }
+    }
+
+    getNumberOfChildren(){
+        return this.walkChildren(this);
+    }
+
+    walkChildren(node){
+        let allChildren = 0;
+        if(node.children){
+            node.children.forEach((child)=>{
+                if(child instanceof User){
+                    allChildren += 1;
+                }
+                if(child.children){
+                    allChildren += this.walkChildren(child);
+                }
+            });
+            return allChildren;
+        }
+    }
+
+    printFullTree(){
+        return [{"child":this, "step":0} , ...this.walkTree(this, 1)]
+    }
+
+    walkTree(node, step){
         const allTree = [];
         if(node.children){
             node.children.forEach((child)=>{
+                allTree.push({child, step});
                 if(child.children){
-                    allTree.push({child, step, count :count+(child.children.length)})
-                }
-                else{
-                    allTree.push({child, step});
-                }
-                if(child.children){
-                    allTree.push(...this.walkTree(child, step+1, count));
+                    allTree.push(...this.walkTree(child, step+1));
                 }
             });
             return allTree;
@@ -100,7 +133,7 @@ class Group {
                 return true;
             }
             else if (resultNode.children[0] instanceof Group && node instanceof User) {
-                if (resultNode.others) {// fixme cant add the same user to others;
+                if (resultNode.others) {
                     if(resultNode.others.isNodeExistInGroup(node.name)){
                         return false;
                     }
@@ -116,21 +149,17 @@ class Group {
                 return true;
             }
             else {
-                const otherChildren = resultNode.children.map((child) => {
-                    return child;
-                });
+                resultNode.others = new Group(resultNode, "others" + ++i, resultNode.children);
                 resultNode.children = [];
-                resultNode.others = new Group(resultNode, "others" + ++i, otherChildren);
                 resultNode.children.push(resultNode.others);
-                otherChildren.forEach((child) => {
-                    child.parents.push({
-                        parent: resultNode,
-                        name: "others" + i,
-                        children: otherChildren
-                    })
-                });
                 resultNode.children.push(node);
                 node.parent = resultNode;
+
+                resultNode.others.children.forEach((child) => {
+                    child.removeParent(resultNode);
+                    child.parents.push(resultNode.others);
+                });
+
                 return true;
             }
         }
@@ -145,14 +174,6 @@ class Group {
             return true;
         }
     }
-
-    // searchGroupPath(groupName) {
-    //     const groupNode = this.searchUnique(groupName);
-    //     const path = groupNode.myPath(groupNode);
-    //     return path.map((step) => {
-    //         return step
-    //     })
-    // }
 
     add(node, parentNode) {
         if (parentNode) {

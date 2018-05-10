@@ -77,17 +77,11 @@ class GroupsController{
                                 MenuView.sendMessage("There is already a group with this name within the group you selected")
                             }
                             this.groupsMenu();
-                        });
-                        // const resultsPath = nodes.map((node)=>{
-                        //     return node.myPath().join(">");
-                        // });
-                        // for(let i = 0; i<resultsPath.length; i++){
-                        //     MenuView.sendMessage(`[${i}] ${resultsPath[i]}`);
-                        // }
-                        // MenuView.RootMenu((i)=>{
-                        //     const selectedGroup = nodes[i];
-
-                        // }, "Select a group");
+                        })
+                        .catch((err)=>{
+                            MenuView.sendMessage(err);
+                            this.groupsMenu();
+                        })
                     }
                     else if(nodes.length === 1){
                         const selectedGroup = nodes[0];
@@ -140,12 +134,17 @@ class GroupsController{
             }
             MenuView.RootMenu((i) => {
                 selectedGroup = nodes[i];
-                resolve (selectedGroup)
+                if(selectedGroup){
+                    resolve (selectedGroup);
+                }
+                else{
+                    reject(new Error("The selected group does not exist"));
+                }
             }, "Select a group");//fixme - השאלה נשלחת פעמיים
         })
     }
 
-    deleteGroup(){
+    deleteGroup(){ //fixme אם הילדים הם קבוצות ויש בהן עוד משתמשים...... צריך גם לנתק את ההצבעות של המשתמשים לקבוצות האלו שנמחקו
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);
             if(nodes.length > 1){
@@ -153,6 +152,12 @@ class GroupsController{
                      if(selectedGroup.children.length){
                          if(selectedGroup.children[0] instanceof User){
                              selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
+                         }
+                         else{
+                             const childrenParents = selectedGroup.getChildrenParentToDetach();
+                             childrenParents.forEach((child)=>{
+                                 child.user.removeParent(child.parent);
+                             })
                          }
                      }
                      if(this.tree.removeGroup(selectedGroup)){
@@ -162,14 +167,24 @@ class GroupsController{
                          MenuView.sendMessage("Something went wrong...");
                      }
                      this.groupsMenu();
-                 });
+                 })
+                 .catch((err)=>{
+                     MenuView.sendMessage(err);
+                     this.groupsMenu();
+                 })
             }
 
             else if(nodes.length === 1){
-                selectedGroup = nodes[0];
+                const selectedGroup = nodes[0];
                 if(selectedGroup.children.length){
                     if(selectedGroup.children[0] instanceof User){
                         selectedGroup.children.forEach(user => user.removeParent(selectedGroup));
+                    }
+                    else{
+                        const childrenParents = selectedGroup.getChildrenParentToDetach();
+                        childrenParents.forEach((child)=>{
+                            child.user.removeParent(child.parent);
+                        })
                     }
                 }
                 if(this.tree.removeGroup(selectedGroup)){

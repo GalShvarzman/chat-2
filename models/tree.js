@@ -19,7 +19,6 @@ class NTree{
     removeUserFromGroups(parents, userName){
         return this.root.removeUserFromGroups(parents, userName);
     }
-    getGroupsAndUsersListForPrint(){}
 
     printFullTree(){
         return this.root.printFullTree();
@@ -30,9 +29,6 @@ class NTree{
     isNodeExistInGroup(name){
         return this.root.isNodeExistInGroup(name);
     }
-    // searchGroupPath(groupName){
-    //     return this.root.searchGroupPath(groupName);
-    // }
 }
 
 module.exports.NTree = NTree;
