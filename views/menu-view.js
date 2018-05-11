@@ -23,12 +23,12 @@ function waitForAnAnswer(answer, callback, func){
     callback(answer);
 }
 
-function sendMessage(message){
-    console.log(message);
+function sendMessage(data){
+    console.log(data.message);
 }
 
-function sendErrorMessage(message){
-    console.error(message);
+function sendErrorMessage(data){
+    console.error(data.message);
 }
 
 module.exports = {

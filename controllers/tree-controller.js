@@ -16,7 +16,7 @@ class TreeController{
     constructor(){
         this.tree = new NTree();
         this.usersDb = new UsersDb();
-        this.usersController = new UsersController(this.tree , this.mainMenu.bind(this), this.usersDb);
+        this.usersController = new UsersController(this.tree , this.mainMenu.bind(this), this.usersDb);//fixme מחיקת יוזר מקבוצות להעביר למקום אחר
         this.groupsController = new GroupsController(this.tree, this.mainMenu.bind(this));
         this.usersAndGroupsController = new UsersAndGroupsController(this.tree, this.mainMenu.bind(this), this.usersDb);
 
@@ -25,7 +25,7 @@ class TreeController{
     }
 
     init(){
-        console.log("init");
+        //console.log("init");
         this.mainMenu();
     }
 

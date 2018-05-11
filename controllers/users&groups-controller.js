@@ -46,7 +46,7 @@ class UsersAndGroupsController {
             const nodes = this.tree.search(groupName);
             if(nodes.length > 1) {
                 filterOptions(nodes).then((selectedGroup)=>{
-                    this.checkIfFlattenSucceededAndSendMessage(selectedGroup);
+                    this.checkIfFlattenSucceeded(selectedGroup);
                 })
                 .catch((err)=>{
                     MenuView.sendMessage(err);
@@ -55,7 +55,7 @@ class UsersAndGroupsController {
             }
             else if(nodes.length === 1){
                 const selectedGroup = nodes[0];
-                this.checkIfFlattenSucceededAndSendMessage(selectedGroup);
+                this.checkIfFlattenSucceeded(selectedGroup);
             }
             else{
                 MenuView.sendMessage(`Group ${groupName} does not exist`);
@@ -65,7 +65,7 @@ class UsersAndGroupsController {
         }, "Enter the name of the group you want to flatten");
     }
 
-    checkIfFlattenSucceededAndSendMessage(selectedGroup){
+    checkIfFlattenSucceeded(selectedGroup){
         if(selectedGroup.flattening()){
             MenuView.sendMessage(`Group ${selectedGroup.name} flattened successfully`);
         }

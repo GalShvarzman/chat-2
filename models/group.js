@@ -120,7 +120,7 @@ class Group {
         }
     }
 
-    checkTypeAndAdd(resultNode, node) {
+    checkTypeAndAdd(resultNode, node) {//fixme לסדר בפונקציות קטנות שכל אחת עושה רק דבר אחד
         if (resultNode.children.length) {
             if (resultNode.children[0] instanceof Group && node instanceof Group) {
                 resultNode.children.push(node);

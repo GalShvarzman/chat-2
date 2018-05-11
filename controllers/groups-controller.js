@@ -34,7 +34,7 @@ class GroupsController{
                     this.back();
                     break;
                 default:
-                    MenuView.sendMessage('We did not understand your request');
+                    MenuView.sendErrorMessage({message: 'We did not understand your request', status: "failure"});
                     this.groupsMenu();
                     break;
             }
@@ -50,7 +50,7 @@ class GroupsController{
             }
             else{
                 this.tree.add(new Group(null, groupName));
-                MenuView.sendMessage("Group created successfully");
+                MenuView.sendMessage({message:`Group ${groupName} created successfully`, status: "success"});
                 this.groupsMenu();
             }
         }, "Enter a name for the group");
@@ -58,11 +58,11 @@ class GroupsController{
             MenuView.RootMenu((answer)=>{
                 if(answer === "root"){
                     if(this.tree.isNodeExistInGroup(groupName)){
-                        MenuView.sendMessage("There is already a group with this name within the group you selected")
+                        MenuView.sendErrorMessage({message:`There is already a group called ${groupName} within the group you selected`, status: "failure"})
                     }
                     else{
                         this.tree.add(new Group(null, groupName));
-                        MenuView.sendMessage("Group created successfully");
+                        MenuView.sendMessage({message:`Group ${groupName} created successfully`, status: "success"});
                     }
                     this.groupsMenu()
                 }
@@ -70,39 +70,36 @@ class GroupsController{
                     const nodes = this.tree.search(answer);
                     if(nodes.length > 1){
                         filterOptions(nodes).then((selectedGroup)=>{
-                            if(!selectedGroup.isNodeExistInGroup(groupName)){
-                                this.tree.add(new Group(null, groupName), selectedGroup);
-                                MenuView.sendMessage("Group created successfully");
-                            }
-                            else{
-                                MenuView.sendMessage("There is already a group with this name within the group you selected")
-                            }
-                            this.groupsMenu();
+                            this.createGroup(selectedGroup, groupName);
                         })
                         .catch((err)=>{
-                            MenuView.sendMessage(err);
+                            MenuView.sendErrorMessage({message: err, status: "failure"});
                             this.groupsMenu();
                         })
                     }
                     else if(nodes.length === 1){
                         const selectedGroup = nodes[0];
-                        if(!selectedGroup.isNodeExistInGroup(groupName)){
-                            this.tree.add(new Group(null, groupName), selectedGroup);
-                            MenuView.sendMessage("Group created successfully");
-                        }
-                        else{
-                            MenuView.sendMessage("There is already a group with this name within the group you selected")
-                        }
-                        this.groupsMenu();
+                        this.createGroup(selectedGroup, groupName);
                     }
                     else{
-                        MenuView.sendMessage("No group with this name exists");
+                        MenuView.sendErrorMessage({message:`Group ${selectedGroup.name} does not exist`, status:"failure"});
                         this.groupsMenu()
                     }
                 }
             }, "Where to? group [enter the group name] or Tree [root]?");
         }
 
+    }
+
+    createGroup(selectedGroup, groupName){
+        if(!selectedGroup.isNodeExistInGroup(groupName)){
+            this.tree.add(new Group(null, groupName), selectedGroup);
+            MenuView.sendMessage({message:`Group ${groupName} created successfully`, status:"success"});
+        }
+        else{
+            MenuView.sendErrorMessage({message:`There is already a group called ${groupName} within group ${selectedGroup.name}`, status:"failure"});
+        }
+        this.groupsMenu();
     }
 
     getGroupFullPath(){
@@ -114,85 +111,79 @@ class GroupsController{
                     path.push(node.myPath().join(' > '));
                 });
                 for(let p of path){
-                    MenuView.sendMessage(p);
+                    MenuView.sendMessage({message: p, status:"success"});
                 }
             }
             else{
-                MenuView.sendMessage("Group does not exist");
+                MenuView.sendErrorMessage({message:`Group ${name} does not exist`, status:"success"});
             }
            this.groupsMenu();
         }, "Enter a group name");
     }
-
-
 
     deleteGroup(){
         MenuView.RootMenu((name)=>{
             const nodes = this.tree.search(name);
             if(nodes.length > 1){
                  filterOptions(nodes).then((selectedGroup)=>{
-                     if(selectedGroup.children.length){
-                         if(selectedGroup.children[0] instanceof User){
-                             selectedGroup.children.forEach((child)=>{child.removeParent(selectedGroup)});
-                         }
-                         else{
-                             const childrenParents = selectedGroup.getChildrenParentToDetach();
-                             childrenParents.forEach((child)=>{
-                                 child.user.removeParent(child.parent);
-                             })
-                         }
-                     }
-                     if(this.tree.removeGroup(selectedGroup)){
-                         MenuView.sendMessage("Group deleted successfully");
-                     }
-                     else{
-                         MenuView.sendMessage("Something went wrong...");
-                     }
-                     this.groupsMenu();
+                     this.detachPointers(selectedGroup);
                  })
                  .catch((err)=>{
-                     MenuView.sendMessage(err);
+                     MenuView.sendErrorMessage({message: err, status: "failure"});
                      this.groupsMenu();
                  })
             }
 
             else if(nodes.length === 1){
                 const selectedGroup = nodes[0];
-                if(selectedGroup.children.length){
-                    if(selectedGroup.children[0] instanceof User){
-                        selectedGroup.children.forEach(user => user.removeParent(selectedGroup));
-                    }
-                    else{
-                        const childrenParents = selectedGroup.getChildrenParentToDetach();
-                        childrenParents.forEach((child)=>{
-                            child.user.removeParent(child.parent);
-                        })
-                    }
-                }
-                if(this.tree.removeGroup(selectedGroup)){
-                    MenuView.sendMessage("Group deleted successfully");
-                }
-                else{
-                    MenuView.sendMessage("Something went wrong, try again");
-                }
-                this.groupsMenu();
+                this.detachPointers(selectedGroup);
             }
+
             else{
-                MenuView.sendMessage("Group does not exist");
+                MenuView.sendMessage({message:`Group ${name} does not exist`, status:"failure"});
                 this.groupsMenu();
             }
         }, "Enter the name of the group you want to delete")
+    }
+
+    detachPointers(selectedGroup){
+        if(selectedGroup.children.length){
+            if(selectedGroup.children[0] instanceof User){
+                selectedGroup.children.forEach(child => child.removeParent(selectedGroup));
+            }
+            else{
+                this.detachChildrenPointers(selectedGroup);
+            }
+        }
+        this.removeGroup(selectedGroup);
+    }
+
+    detachChildrenPointers(selectedGroup){
+        const childrenParents = selectedGroup.getChildrenParentToDetach();
+        childrenParents.forEach((child)=>{
+            child.user.removeParent(child.parent);
+        })
+    }
+
+    removeGroup(selectedGroup){
+        if(this.tree.removeGroup(selectedGroup)){
+            MenuView.sendMessage({message:`Group ${selectedGroup.name} deleted successfully`, status: "success"});
+        }
+        else{
+            MenuView.sendErrorMessage({message : "Something went wrong in the process of deleting the group", status : "failure", code:1});
+        }
+        this.groupsMenu();
     }
 
     printGroupsList(){
         const groups = this.tree.getGroupsList();
         if(groups.length){
             for(let group of groups){
-                MenuView.sendMessage(group.name);
+                MenuView.sendMessage({message: group.name, status: "success"});
             }
         }
         else{
-            MenuView.sendMessage("The list is empty");
+            MenuView.sendErrorMessage({message:"The list is empty", status:"failure"});
         }
         this.groupsMenu();
     }
