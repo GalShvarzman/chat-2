@@ -101,77 +101,147 @@ class Group {
         }
     }
 
-    checkTypeAndAdd(resultNode, node) {//fixme לסדר בפונקציות קטנות שכל אחת עושה רק דבר אחד
-        if (resultNode.children.length) {
-            if (resultNode.children[0] instanceof Group && node instanceof Group) {
-                resultNode.children.push(node);
-                node.parent = resultNode;
-                return true;
-            }
-            else if (resultNode.children[0] instanceof User && node instanceof User) {
-                resultNode.children.push(node);
-                node.parents.push(resultNode);
-                return true;
-            }
-            else if (resultNode.children[0] instanceof Group && node instanceof User) {
-                if (resultNode.others) {
-                    if(resultNode.others.isNodeExistInGroup(node.name)){
-                        return false;
-                    }
-                    else{
-                        resultNode.others.children.push(node);
-                    }
-                }
-                else {
-                    resultNode.others = new Group(resultNode, "others" + ++i, [node]);
-                    resultNode.children.push(resultNode.others);
-                }
-                node.parents.push(resultNode.others);
-                return true;
+    addNodeToSelectedGroup(parentGroup, newNode) {
+        const groupChildren = parentGroup.children;
+        if (groupChildren.length) {
+            const groupFirstChild = groupChildren[0];
+            if (groupFirstChild instanceof Group){
+                return this.addNodeToSelectedGroupWhenGroupChildrenAreGroups(groupChildren, newNode, parentGroup);
             }
             else {
-                resultNode.others = new Group(resultNode, "others" + ++i, resultNode.children);
-                resultNode.children = [];
-                resultNode.children.push(resultNode.others);
-                resultNode.children.push(node);
-                node.parent = resultNode;
-
-                resultNode.others.children.forEach((child) => {
-                    child.removeParent(resultNode);
-                    child.parents.push(resultNode.others);
-                });
-
-                return true;
+                return this.addNodeToSelectedGroupWhenGroupChildrenAreUsers(groupChildren, newNode, parentGroup)
             }
         }
         else {
-            resultNode.children.push(node);
-            if (node instanceof Group) {
-                node.parent = resultNode;
-            }
-            else {
-                node.parents.push(resultNode);
-            }
-            return true;
+            return this.addNodeToSelectedGroupWhenGroupHasNoChildren(groupChildren, newNode, parentGroup);
         }
     }
 
-    add(node, parentNode) {
-        if (parentNode) {
-            this.checkTypeAndAdd(parentNode, node);
+    addNodeToSelectedGroupWhenGroupChildrenAreGroups(groupChildren, newNode, parentGroup){
+        if(newNode instanceof Group) {
+            groupChildren.push(newNode);
+            newNode.parent = parentGroup;
+            return true;
+        }
+        else{
+            return this.checkForOthersGroup(groupChildren, newNode, parentGroup);
+        }
+    }
+
+    checkForOthersGroup(groupChildren, newNode, parentGroup){
+        const groupOthers = parentGroup.others;
+        if (groupOthers) {
+            if(groupOthers.isNodeExistInGroup(newNode.name)){
+                return false;
+            }
+            else{
+                groupOthers.children.push(newNode);
+            }
         }
         else {
-            this.checkTypeAndAdd(this, node);
+            parentGroup.others = new Group(parentGroup, "others" + ++i, [newNode]);
+            groupChildren.push(parentGroup.others);
+        }
+        newNode.parents.push(parentGroup.others);
+        return true;
+    }
+
+    addNodeToSelectedGroupWhenGroupChildrenAreUsers(groupChildren, newNode, parentGroup){
+        if(newNode instanceof User){
+            groupChildren.push(newNode);
+            newNode.parents.push(parentGroup);
+        }
+        else{
+            parentGroup.others = new Group(parentGroup, "others" + ++i, groupChildren);
+            groupChildren.length = 0;
+            groupChildren.push(parentGroup.others, newNode);
+            newNode.parent = parentGroup;
+
+            parentGroup.others.children.forEach((child) => {
+                child.removeParent(parentGroup);
+                child.parents.push(parentGroup.others);
+            });
+        }
+        return true;
+    }
+
+    addNodeToSelectedGroupWhenGroupHasNoChildren(groupChildren, newNode, parentGroup){
+        groupChildren.push(newNode);
+        if (newNode instanceof Group) {
+            newNode.parent = parentGroup;
+        }
+        else {
+            newNode.parents.push(parentGroup);
+        }
+        return true;
+    }
+
+    // addNodeToSelectedGroup(resultNode, node) {//fixme לסדר בפונקציות קטנות שכל אחת עושה רק דבר אחד
+    //     if (resultNode.children.length) {
+    //         if (resultNode.children[0] instanceof Group && node instanceof Group) {
+    //             resultNode.children.push(node);
+    //             node.parent = resultNode;
+    //             return true;
+    //         }
+    //         else if (resultNode.children[0] instanceof User && node instanceof User) {
+    //             resultNode.children.push(node);
+    //             node.parents.push(resultNode);
+    //             return true;
+    //         }
+    //         else if (resultNode.children[0] instanceof Group && node instanceof User) {
+    //             if (resultNode.others) {
+    //                 if(resultNode.others.isNodeExistInGroup(node.name)){
+    //                     return false;
+    //                 }
+    //                 else{
+    //                     resultNode.others.children.push(node);
+    //                 }
+    //             }
+    //             else {
+    //                 resultNode.others = new Group(resultNode, "others" + ++i, [node]);
+    //                 resultNode.children.push(resultNode.others);
+    //             }
+    //             node.parents.push(resultNode.others);
+    //             return true;
+    //         }
+    //         else {
+    //             resultNode.others = new Group(resultNode, "others" + ++i, resultNode.children);
+    //             resultNode.children = [];
+    //             resultNode.children.push(resultNode.others);
+    //             resultNode.children.push(node);
+    //             node.parent = resultNode;
+    //
+    //             resultNode.others.children.forEach((child) => {
+    //                 child.removeParent(resultNode);
+    //                 child.parents.push(resultNode.others);
+    //             });
+    //
+    //             return true;
+    //         }
+    //     }
+    //     else {
+    //         resultNode.children.push(node);
+    //         if (node instanceof Group) {
+    //             node.parent = resultNode;
+    //         }
+    //         else {
+    //             node.parents.push(resultNode);
+    //         }
+    //         return true;
+    //     }
+    // }
+
+    add(node, parentNode) {
+        if (parentNode) {
+            this.addNodeToSelectedGroup(parentNode, node);
+        }
+        else {
+            this.addNodeToSelectedGroup(this, node);
         }
     }
 
     addUserToGroup(userNode) {
-        if(!this.checkTypeAndAdd(this, userNode)){
-            return false
-        }
-        else{
-            return true
-        }
+        return this.addNodeToSelectedGroup(this, userNode)
     }
 
 
@@ -234,12 +304,7 @@ class Group {
         const i = this.children.findIndex((child) => {
             return child.name === name;
         });
-        if (i !== -1) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return i !== -1;
     }
 
     getGroupsList() {

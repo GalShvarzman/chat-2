@@ -77,7 +77,7 @@ class UsersAndGroupsController {
 
     padding(number){
         let start = " ";
-        let space =  "†";
+        let space =  "-";
         for(let i = 0; i<number; i++){
            start += space
         }
