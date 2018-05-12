@@ -4,7 +4,7 @@ class Group {
     constructor(parent, name, children) {
         this.parent = parent;
         this.name = name;
-        this.children = children || [];
+        this.children = [].concat(children||[]);
     }
 
     flattening() {
@@ -102,29 +102,29 @@ class Group {
     }
 
     addNodeToSelectedGroup(parentGroup, newNode) {
-        const groupChildren = parentGroup.children;
-        if (groupChildren.length) {
-            const groupFirstChild = groupChildren[0];
+        const parentGroupChildren = parentGroup.children;
+        if (parentGroupChildren.length) {
+            const groupFirstChild = parentGroupChildren[0];
             if (groupFirstChild instanceof Group){
-                return this.addNodeToSelectedGroupWhenGroupChildrenAreGroups(groupChildren, newNode, parentGroup);
+                return this.addNodeToSelectedGroupWhenGroupChildrenAreGroups(parentGroupChildren, newNode, parentGroup);
             }
             else {
-                return this.addNodeToSelectedGroupWhenGroupChildrenAreUsers(groupChildren, newNode, parentGroup)
+                return this.addNodeToSelectedGroupWhenGroupChildrenAreUsers(parentGroupChildren, newNode, parentGroup)
             }
         }
         else {
-            return this.addNodeToSelectedGroupWhenGroupHasNoChildren(groupChildren, newNode, parentGroup);
+            return this.addNodeToSelectedGroupWhenGroupHasNoChildren(parentGroupChildren, newNode, parentGroup);
         }
     }
 
-    addNodeToSelectedGroupWhenGroupChildrenAreGroups(groupChildren, newNode, parentGroup){
+    addNodeToSelectedGroupWhenGroupChildrenAreGroups(parentGroupChildren, newNode, parentGroup){
         if(newNode instanceof Group) {
-            groupChildren.push(newNode);
+            parentGroupChildren.push(newNode);
             newNode.parent = parentGroup;
             return true;
         }
         else{
-            return this.checkForOthersGroup(groupChildren, newNode, parentGroup);
+            return this.checkForOthersGroup(parentGroupChildren, newNode, parentGroup);
         }
     }
 
@@ -146,15 +146,15 @@ class Group {
         return true;
     }
 
-    addNodeToSelectedGroupWhenGroupChildrenAreUsers(groupChildren, newNode, parentGroup){
+    addNodeToSelectedGroupWhenGroupChildrenAreUsers(parentGroupChildren, newNode, parentGroup){
         if(newNode instanceof User){
-            groupChildren.push(newNode);
+            parentGroupChildren.push(newNode);
             newNode.parents.push(parentGroup);
         }
         else{
-            parentGroup.others = new Group(parentGroup, "others" + ++i, groupChildren);
-            groupChildren.length = 0;
-            groupChildren.push(parentGroup.others, newNode);
+            parentGroup.others = new Group(parentGroup, "others" + ++i, parentGroupChildren);
+            parentGroupChildren.length = 0;
+            parentGroupChildren.push(parentGroup.others, newNode);
             newNode.parent = parentGroup;
 
             parentGroup.others.children.forEach((child) => {
@@ -165,8 +165,8 @@ class Group {
         return true;
     }
 
-    addNodeToSelectedGroupWhenGroupHasNoChildren(groupChildren, newNode, parentGroup){
-        groupChildren.push(newNode);
+    addNodeToSelectedGroupWhenGroupHasNoChildren(parentGroupChildren, newNode, parentGroup){
+        parentGroupChildren.push(newNode);
         if (newNode instanceof Group) {
             newNode.parent = parentGroup;
         }
