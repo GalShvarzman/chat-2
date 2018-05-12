@@ -24,16 +24,18 @@ function waitForAnAnswer(answer, callback, func){
 }
 
 function sendMessage(data){
-    console.log(data.message);
+    if(data.status === "failure"){
+        console.error(data.message)
+    }
+    else{
+        console.info(data.message);
+    }
 }
 
-function sendErrorMessage(data){
-    console.error(data.message);
-}
+
 
 module.exports = {
     RootMenu,
     sendMessage,
-    exitChat,
-    sendErrorMessage
+    exitChat
 };

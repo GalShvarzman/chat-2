@@ -16,9 +16,6 @@ class NTree{
     removeGroup(node){
         return this.root.removeGroup(node);
     }
-    removeUserFromGroups(parents, userName){
-        return this.root.removeUserFromGroups(parents, userName);
-    }
 
     printFullTree(){
         return this.root.printFullTree();

@@ -101,25 +101,6 @@ class Group {
         }
     }
 
-    removeUserFromGroups(parents, userName) {
-        const indexes = [];
-        parents.forEach((parent) => {
-            let i = parent.children.findIndex((child) => {
-                return child.name === userName;
-            });
-            if (i !== -1) {
-                parent.children.splice(i, 1);
-                indexes.push(i);
-            }
-        });
-        if (indexes.length === parents.length) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
     checkTypeAndAdd(resultNode, node) {//fixme לסדר בפונקציות קטנות שכל אחת עושה רק דבר אחד
         if (resultNode.children.length) {
             if (resultNode.children[0] instanceof Group && node instanceof Group) {

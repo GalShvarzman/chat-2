@@ -34,7 +34,7 @@ class UsersAndGroupsController {
                     this.back();
                     break;
                 default:
-                    MenuView.sendMessage('We did not understand your request');
+                    MenuView.sendMessage({message:'We did not understand your request', status: "failure"});
                     this.usersAndGroupsMenu();
                     break;
             }
@@ -46,38 +46,38 @@ class UsersAndGroupsController {
             const nodes = this.tree.search(groupName);
             if(nodes.length > 1) {
                 filterOptions(nodes).then((selectedGroup)=>{
-                    this.checkIfFlattenSucceeded(selectedGroup);
+                    this.flattenGroup(selectedGroup);
                 })
                 .catch((err)=>{
-                    MenuView.sendMessage(err);
+                    MenuView.sendMessage({message:err, status:"failure"});
                     this.usersAndGroupsMenu();
                 });
             }
             else if(nodes.length === 1){
                 const selectedGroup = nodes[0];
-                this.checkIfFlattenSucceeded(selectedGroup);
+                this.flattenGroup(selectedGroup);
             }
             else{
-                MenuView.sendMessage(`Group ${groupName} does not exist`);
+                MenuView.sendMessage({message:`Group ${groupName} does not exist`, status:"failure"});
                 this.usersAndGroupsMenu();
             }
 
         }, "Enter the name of the group you want to flatten");
     }
 
-    checkIfFlattenSucceeded(selectedGroup){
+    flattenGroup(selectedGroup){
         if(selectedGroup.flattening()){
-            MenuView.sendMessage(`Group ${selectedGroup.name} flattened successfully`);
+            MenuView.sendMessage({message:`Group ${selectedGroup.name} flattened successfully`, status:"success"});
         }
         else{
-            MenuView.sendMessage(`Group ${selectedGroup.name} cannot be flattened`)
+            MenuView.sendMessage({message:`Group ${selectedGroup.name} cannot be flattened`, status:"failure"})
         }
         this.usersAndGroupsMenu();
     }
 
     padding(number){
         let start = " ";
-        let space =  "-";
+        let space =  "†";
         for(let i = 0; i<number; i++){
            start += space
         }
@@ -90,10 +90,10 @@ class UsersAndGroupsController {
             let padding = this.padding(node.step);
             if(node.child instanceof Group){
                 let childrenNumber = node.child.getNumberOfChildren();
-                MenuView.sendMessage(padding + node.child.name + `(${childrenNumber})`);
+                MenuView.sendMessage({message: padding + node.child.name + `(${childrenNumber})`, status:"success"});
             }
             else{
-                MenuView.sendMessage(padding + node.child.name);
+                MenuView.sendMessage({message:padding + node.child.name, status:"success"});
             }
         });
         this.usersAndGroupsMenu();
@@ -107,7 +107,7 @@ class UsersAndGroupsController {
                 getGroupName.call(this);
             }
             else{
-                MenuView.sendMessage(`${userName} does not exist`);
+                MenuView.sendMessage({message:`User ${userName} does not exist`, status:"failure"});
                 this.usersAndGroupsMenu();
             }
         }, "Enter a username");
@@ -119,7 +119,7 @@ class UsersAndGroupsController {
                     filterOptions(nodes).then((selectedGroup)=>{
                         this.addOrDelete(action, userName, selectedGroup);
                     }).catch((err)=>{
-                        MenuView.sendMessage(err);
+                        MenuView.sendMessage({message:err, status: "failure"});
                         this.usersAndGroupsMenu();
                     });
                 }
@@ -128,7 +128,7 @@ class UsersAndGroupsController {
                     this.addOrDelete(action, userName, selectedGroup);
                 }
                 else{
-                    MenuView.sendMessage("Group does not exist");
+                    MenuView.sendMessage({message:`Group ${name} does not exist`, status:"failure"});
                     this.usersAndGroupsMenu();
                 }
             }, "Enter a group name");
@@ -146,15 +146,15 @@ class UsersAndGroupsController {
 
     addUserToGroup(userName, selectedGroup){
         if(selectedGroup.isNodeExistInGroup(userName)){
-            MenuView.sendMessage(`${userName} is already exist in group ${selectedGroup.name}`);
+            MenuView.sendMessage({message:`${userName} is already exist in group ${selectedGroup.name}`, status:"failure"});
         }
         else{
             const userNode = this.usersDb.getUser(userName);
             if(!selectedGroup.addUserToGroup(userNode)){
-                MenuView.sendMessage(`${userName} can not be added to group ${selectedGroup.name}`)
+                MenuView.sendMessage({message:`${userName} can not be added to group ${selectedGroup.name}`, status:"failure"})
             }
             else{
-                MenuView.sendMessage(`${userName} added successfully to group ${selectedGroup.name}`);
+                MenuView.sendMessage({message:`${userName} added successfully to group ${selectedGroup.name}`, status:"success"});
             }
         }
         this.usersAndGroupsMenu();
@@ -162,15 +162,15 @@ class UsersAndGroupsController {
 
     deleteUserFromGroup(userName, selectedGroup){
         if(!selectedGroup.isNodeExistInGroup(userName)){
-            MenuView.sendMessage(`${userName} does not exist in group ${selectedGroup.name}`);
+            MenuView.sendMessage({message:`${userName} does not exist in group ${selectedGroup.name}`, status:"failure"});
         }
         else{
             const user = this.usersDb.getUser(userName);
             if(user.removeParent(selectedGroup) && selectedGroup.removeUserFromGroup(userName)){
-                MenuView.sendMessage(`${userName} deleted successfully from group ${selectedGroup.name}`);
+                MenuView.sendMessage({message:`${userName} deleted successfully from group ${selectedGroup.name}`, status:"success"});
             }
             else{
-                MenuView.sendMessage("Something went wrong...");//fixme
+                MenuView.sendMessage({message:"Something went wrong in the process of deleting the user from the group", status:"failure", code:2});
             }
         }
         this.usersAndGroupsMenu();

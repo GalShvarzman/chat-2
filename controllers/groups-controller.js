@@ -34,7 +34,7 @@ class GroupsController{
                     this.back();
                     break;
                 default:
-                    MenuView.sendErrorMessage({message: 'We did not understand your request', status: "failure"});
+                    MenuView.sendMessage({message: 'We did not understand your request', status: "failure"});
                     this.groupsMenu();
                     break;
             }
@@ -55,10 +55,10 @@ class GroupsController{
             }
         }, "Enter a name for the group");
         function parent(){
-            MenuView.RootMenu((answer)=>{
-                if(answer === "root"){
+            MenuView.RootMenu((name)=>{
+                if(name === "root"){
                     if(this.tree.isNodeExistInGroup(groupName)){
-                        MenuView.sendErrorMessage({message:`There is already a group called ${groupName} within the group you selected`, status: "failure"})
+                        MenuView.sendMessage({message:`There is already a group called ${groupName} within the group you selected`, status: "failure"})
                     }
                     else{
                         this.tree.add(new Group(null, groupName));
@@ -67,13 +67,13 @@ class GroupsController{
                     this.groupsMenu()
                 }
                 else{
-                    const nodes = this.tree.search(answer);
+                    const nodes = this.tree.search(name);
                     if(nodes.length > 1){
                         filterOptions(nodes).then((selectedGroup)=>{
                             this.createGroup(selectedGroup, groupName);
                         })
                         .catch((err)=>{
-                            MenuView.sendErrorMessage({message: err, status: "failure"});
+                            MenuView.sendMessage({message: err, status: "failure"});
                             this.groupsMenu();
                         })
                     }
@@ -82,7 +82,7 @@ class GroupsController{
                         this.createGroup(selectedGroup, groupName);
                     }
                     else{
-                        MenuView.sendErrorMessage({message:`Group ${selectedGroup.name} does not exist`, status:"failure"});
+                        MenuView.sendMessage({message:`Group ${name} does not exist`, status:"failure"});
                         this.groupsMenu()
                     }
                 }
@@ -97,7 +97,7 @@ class GroupsController{
             MenuView.sendMessage({message:`Group ${groupName} created successfully`, status:"success"});
         }
         else{
-            MenuView.sendErrorMessage({message:`There is already a group called ${groupName} within group ${selectedGroup.name}`, status:"failure"});
+            MenuView.sendMessage({message:`There is already a group called ${groupName} within group ${selectedGroup.name}`, status:"failure"});
         }
         this.groupsMenu();
     }
@@ -115,7 +115,7 @@ class GroupsController{
                 }
             }
             else{
-                MenuView.sendErrorMessage({message:`Group ${name} does not exist`, status:"success"});
+                MenuView.sendMessage({message:`Group ${name} does not exist`, status:"failure"});
             }
            this.groupsMenu();
         }, "Enter a group name");
@@ -129,7 +129,7 @@ class GroupsController{
                      this.detachPointers(selectedGroup);
                  })
                  .catch((err)=>{
-                     MenuView.sendErrorMessage({message: err, status: "failure"});
+                     MenuView.sendMessage({message: err, status: "failure"});
                      this.groupsMenu();
                  })
             }
@@ -170,7 +170,7 @@ class GroupsController{
             MenuView.sendMessage({message:`Group ${selectedGroup.name} deleted successfully`, status: "success"});
         }
         else{
-            MenuView.sendErrorMessage({message : "Something went wrong in the process of deleting the group", status : "failure", code:1});
+            MenuView.sendMessage({message : "Something went wrong in the process of deleting the group", status : "failure", code:1});
         }
         this.groupsMenu();
     }
@@ -183,7 +183,7 @@ class GroupsController{
             }
         }
         else{
-            MenuView.sendErrorMessage({message:"The list is empty", status:"failure"});
+            MenuView.sendMessage({message:"The list is empty", status:"success"});
         }
         this.groupsMenu();
     }

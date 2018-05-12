@@ -7,11 +7,10 @@ const mainQuestion = `== Users ==
 [4] Update user age
 [5] Update user password
 [6] Get all groups that a user associated with
-[7] Back`
-;
+[7] Back`;
+
 class UsersController{
-    constructor(tree , back, usersDb){
-        this.tree = tree;
+    constructor(back, usersDb){
         this.back = back;
         this.usersDb = usersDb;
     }
@@ -41,7 +40,7 @@ class UsersController{
                     this.back();
                     break;
                 default:
-                    MenuView.sendMessage('We did not understand your request');
+                    MenuView.sendMessage({message:'We did not understand your request', status:"failure"});
                     this.usersMenu();
                     break;
             }
@@ -52,7 +51,7 @@ class UsersController{
         let username, age, password;
         MenuView.RootMenu((name) => {
             if (this.usersDb.isUserExists(name)) {
-                sendMessage("username already exist. enter a different username");
+                MenuView.sendMessage({message:`There is already a user called ${name}. enter a different username`, status:"failure"});
                 this.createNewUser();
             }
             else{
@@ -70,23 +69,40 @@ class UsersController{
             MenuView.RootMenu((userPassword)=>{
                 password = userPassword;
                 this.usersDb.addUser(new User(username, age, password));
-                MenuView.sendMessage("User created successfully!");
+                MenuView.sendMessage({message:`User ${username} created successfully!`, status:"success"});
                 this.usersMenu();
             }, "Select a password")
         }
     }
 
+    removeUserFromGroups(username) {
+        const indexes = [];
+        const parents = this.usersDb.getUser(username).parents;
+        parents.forEach((parent) => {
+            let i = parent.children.findIndex((child) => {
+                return child.name === username;
+            });
+            if (i !== -1) {
+                parent.children.splice(i, 1);
+                indexes.push(i);
+            }
+        });
+        return (indexes.length === parents.length);
+    }
+
     deleteUser(){
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
-                const parents = this.usersDb.getUser(name).parents;
-                if(this.usersDb.deleteUser(name) && this.tree.removeUserFromGroups(parents, name)){
-                    MenuView.sendMessage("User deleted successfully");
+                if(this.usersDb.deleteUser(name) && this.removeUserFromGroups(name)){
+                    MenuView.sendMessage({message:`User ${name} deleted successfully`, status:"success"});
                     this.usersMenu();
+                }
+                else{
+                    MenuView.sendMessage({message:"Something went wrong with the user's deletion process", status:"failure", code:3})
                 }
             }
             else{
-                MenuView.sendMessage("User does not exist");
+                MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                 this.usersMenu();
             }
         }, "Enter the name of the user you want to delete");
@@ -96,11 +112,11 @@ class UsersController{
         const users = this.usersDb.getUserNamesList();
         if(users.length){
             for(let user of users){
-                MenuView.sendMessage(user);
+                MenuView.sendMessage({message:user, status:"success"});
             }
         }
         else{
-            MenuView.sendMessage("List is empty");
+            MenuView.sendMessage({message:"The list is empty", status:"success"});
         }
         this.usersMenu();
     }
@@ -113,14 +129,14 @@ class UsersController{
                 getNewAgeAndUpdate.call(this);
             }
             else{
-               MenuView.sendMessage("User does not exist");
+               MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                this.usersMenu();
             }
         }, "Enter the name of the user you want to update");
         function getNewAgeAndUpdate(){
             MenuView.RootMenu((newAge)=>{
                 if(selectedUser.updateAge(newAge)){
-                    MenuView.sendMessage("User age updated successfully");
+                    MenuView.sendMessage({message:`User ${name} age updated successfully`, status:"success"});
                     this.usersMenu();
                 }
             }, "Enter the user new age")
@@ -135,14 +151,14 @@ class UsersController{
                 getNewPasswordAndUpdate.call(this);
             }
             else{
-                MenuView.sendMessage("User does not exist");
+                MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                 this.usersMenu();
             }
         }, "Enter the name of the user you want to update");
         function getNewPasswordAndUpdate(){
             MenuView.RootMenu((newPassword)=>{
                 if(selectedUser.updatePassword(newPassword)){
-                    MenuView.sendMessage("User password updated successfully");
+                    MenuView.sendMessage({message:`User ${name} password updated successfully`, status:"success"});
                     this.usersMenu();
                 }
             }, "Enter The user new Password");
@@ -156,15 +172,15 @@ class UsersController{
                 const userParents = selectedUser.getParentsToPrint();
                 if(userParents.length){
                     userParents.forEach((parent)=>{
-                        MenuView.sendMessage(parent);
+                        MenuView.sendMessage({message:parent, status:"success"});
                     })
                 }
                 else{
-                    MenuView.sendMessage("The user is not associated with any group")
+                    MenuView.sendMessage({message:`User ${userName} is not associated with any group`, status:"failure"})
                 }
             }
             else{
-                MenuView.sendMessage("User does not exist");
+                MenuView.sendMessage({message:`User ${userName} does not exist`, status:"failure"});
             }
             this.usersMenu();
         }, "Enter the name of the user")
