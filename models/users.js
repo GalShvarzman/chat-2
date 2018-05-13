@@ -10,10 +10,7 @@ class UsersDb{
     }
     isUserExists(username){
         let i = this.findUserIndex(username);
-        if(i !== -1){
-            return true
-        }
-        return false;
+        return (i !== -1);
     }
     deleteUser(username){
         let i = this.findUserIndex(username);

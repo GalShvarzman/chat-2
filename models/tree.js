@@ -10,9 +10,6 @@ class NTree{
     search(nodeName){
         return this.root.search(nodeName)
     }
-    searchUnique(nodeName){
-        return this.root.searchUnique(nodeName);
-    }
     removeGroup(node){
         return this.root.removeGroup(node);
     }

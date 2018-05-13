@@ -8,6 +8,7 @@ class Group {
     }
 
     flattening() {
+        let result = true;
         let parent = this.parent;
         if(parent.children.length === 1) {
             parent.children.length = 0;
@@ -15,21 +16,22 @@ class Group {
                 this.children.forEach((child)=>{
                     parent.children.push(child);
                     if(child instanceof User){
-                        child.removeParent(this);
+                        const currentResult = child.removeParent(this);
+                        if(!currentResult){
+                            result = currentResult;
+                        }
                         child.parents.push(parent);
                     }
                     else{
-                      child.parent = parent; // check
+                      child.parent = parent;
                     }
                 });
-                return true// fixme
+                return result;
             }
-
         }
         else{
             return false
         }
-
     }
 
     getChildrenParentToDetach(){
@@ -176,61 +178,6 @@ class Group {
         return true;
     }
 
-    // addNodeToSelectedGroup(resultNode, node) {//fixme לסדר בפונקציות קטנות שכל אחת עושה רק דבר אחד
-    //     if (resultNode.children.length) {
-    //         if (resultNode.children[0] instanceof Group && node instanceof Group) {
-    //             resultNode.children.push(node);
-    //             node.parent = resultNode;
-    //             return true;
-    //         }
-    //         else if (resultNode.children[0] instanceof User && node instanceof User) {
-    //             resultNode.children.push(node);
-    //             node.parents.push(resultNode);
-    //             return true;
-    //         }
-    //         else if (resultNode.children[0] instanceof Group && node instanceof User) {
-    //             if (resultNode.others) {
-    //                 if(resultNode.others.isNodeExistInGroup(node.name)){
-    //                     return false;
-    //                 }
-    //                 else{
-    //                     resultNode.others.children.push(node);
-    //                 }
-    //             }
-    //             else {
-    //                 resultNode.others = new Group(resultNode, "others" + ++i, [node]);
-    //                 resultNode.children.push(resultNode.others);
-    //             }
-    //             node.parents.push(resultNode.others);
-    //             return true;
-    //         }
-    //         else {
-    //             resultNode.others = new Group(resultNode, "others" + ++i, resultNode.children);
-    //             resultNode.children = [];
-    //             resultNode.children.push(resultNode.others);
-    //             resultNode.children.push(node);
-    //             node.parent = resultNode;
-    //
-    //             resultNode.others.children.forEach((child) => {
-    //                 child.removeParent(resultNode);
-    //                 child.parents.push(resultNode.others);
-    //             });
-    //
-    //             return true;
-    //         }
-    //     }
-    //     else {
-    //         resultNode.children.push(node);
-    //         if (node instanceof Group) {
-    //             node.parent = resultNode;
-    //         }
-    //         else {
-    //             node.parents.push(resultNode);
-    //         }
-    //         return true;
-    //     }
-    // }
-
     add(node, parentNode) {
         if (parentNode) {
             this.addNodeToSelectedGroup(parentNode, node);
@@ -261,27 +208,6 @@ class Group {
                 }
             });
             return results;
-        }
-    }
-
-    searchUnique(nodeName) {
-        return this.internalSearchUnique(this, nodeName)
-    }
-
-    internalSearchUnique(node, nodeName) {
-        if (node.children) {
-            let result;
-            node.children.some((child) => {
-                if (child.name === nodeName) {
-                    result = child;
-                    return true;
-                }
-                else {
-                    result = this.internalSearchUnique(child, nodeName);
-                    return result;
-                }
-            });
-            return result;
         }
     }
 

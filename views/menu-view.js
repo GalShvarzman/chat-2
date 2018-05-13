@@ -25,14 +25,12 @@ function waitForAnAnswer(answer, callback, func){
 
 function sendMessage(data){
     if(data.status === "failure"){
-        console.error(data.message)
+        console.error(data.message);
     }
     else{
         console.info(data.message);
     }
 }
-
-
 
 module.exports = {
     RootMenu,
