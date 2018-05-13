@@ -77,8 +77,8 @@ class UsersController{
 
     removeUserFromGroups(username) {
         const indexes = [];
-        const parents = this.usersDb.getUser(username).parents;
-        parents.forEach((parent) => {
+        const selectedUserParents = this.usersDb.getUser(username).parents;
+        selectedUserParents.forEach((parent) => {
             let i = parent.children.findIndex((child) => {
                 return child.name === username;
             });
@@ -87,13 +87,13 @@ class UsersController{
                 indexes.push(i);
             }
         });
-        return (indexes.length === parents.length);
+        return (indexes.length === selectedUserParents.length);
     }
 
     deleteUser(){
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
-                if(this.usersDb.deleteUser(name) && this.removeUserFromGroups(name)){
+                if(this.removeUserFromGroups(name) && this.usersDb.deleteUser(name)){
                     MenuView.sendMessage({message:`User ${name} deleted successfully`, status:"success"});
                     this.usersMenu();
                 }
@@ -126,14 +126,14 @@ class UsersController{
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
                 selectedUser = this.usersDb.getUser(name);
-                getNewAgeAndUpdate.call(this);
+                getNewAgeAndUpdate.call(this, name);
             }
             else{
                MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                this.usersMenu();
             }
         }, "Enter the name of the user you want to update");
-        function getNewAgeAndUpdate(){
+        function getNewAgeAndUpdate(name){
             MenuView.RootMenu((newAge)=>{
                 if(selectedUser.updateAge(newAge)){
                     MenuView.sendMessage({message:`User ${name} age updated successfully`, status:"success"});
@@ -148,14 +148,14 @@ class UsersController{
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
                 selectedUser = this.usersDb.getUser(name);
-                getNewPasswordAndUpdate.call(this);
+                getNewPasswordAndUpdate.call(this, name);
             }
             else{
                 MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                 this.usersMenu();
             }
         }, "Enter the name of the user you want to update");
-        function getNewPasswordAndUpdate(){
+        function getNewPasswordAndUpdate(name){
             MenuView.RootMenu((newPassword)=>{
                 if(selectedUser.updatePassword(newPassword)){
                     MenuView.sendMessage({message:`User ${name} password updated successfully`, status:"success"});

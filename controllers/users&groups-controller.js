@@ -104,15 +104,15 @@ class UsersAndGroupsController {
         MenuView.RootMenu((name)=>{
             if(this.usersDb.isUserExists(name)){
                 userName = name;
-                getGroupName.call(this);
+                getGroupName.call(this, userName);
             }
             else{
-                MenuView.sendMessage({message:`User ${userName} does not exist`, status:"failure"});
+                MenuView.sendMessage({message:`User ${name} does not exist`, status:"failure"});
                 this.usersAndGroupsMenu();
             }
         }, "Enter a username");
 
-        function getGroupName(){
+        function getGroupName(userName){
             MenuView.RootMenu((name)=>{
                 const nodes = this.tree.search(name);
                 if(nodes.length > 1){
